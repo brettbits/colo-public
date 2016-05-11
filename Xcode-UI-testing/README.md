@@ -8,6 +8,12 @@ To test these scenarios correctly, the simulator or device must have the contact
 
 The need for manual intervention is unfortunate, but I've decided that there is value in automating the rest of the tests. Every user experiences these code paths, so they need to be flawless.
 
+While learning how to use Xcode 7 UI testing, I relied on these resources:
+
+* [UI Testing in Xcode: WWDC 2015 session 406](https://developer.apple.com/videos/play/wwdc2015/406/)
+* [UI Testing in Xcode 7, Part 1: UI Testing Gotchas - Big Nerd Ranch](https://www.bignerdranch.com/blog/ui-testing-in-xcode-7-part-1-ui-testing-gotchas/)
+* [UI Testing Cheat Sheet and Examples - Joe Masilotti](http://masilotti.com/ui-testing-cheat-sheet/)
+
 ### IMPLEMENTATION
 
 Xcode 7's UI automation has a handy way of dealing with alerts: the `addUIInterruptionMonitorWithDescription` function. Since the first-time user scenario involves two distinct alerts, with slightly different button labels, my tests distinguish between them with the alert's `label`. I've implemented this as two separate UI interruption monitors. I'll use the contacts alert handler as the example:
@@ -20,13 +26,13 @@ Xcode 7's UI automation has a handy way of dealing with alerts: the `addUIInterr
         return false
     }
 
-The above example always chooses the "OK" button for the contacts authorization alert. If the UI interruption doesn't match the expected `alert.label`, no action is taken and false is returned. The next step was to create a parameter for the button text, so either option could be selected as required for a particular test. So the UI interruption monitor was moved into its own function:
+The above example always chooses the "OK" button for the contacts authorization alert. If the UI interruption doesn't match the expected `alert.label`, no action is taken and `false` is returned. The next step was to create a parameter for the button text, so either option could be selected as required for a particular test. So the UI interruption monitor was moved into its own function:
 
     func respondToContactsAlert(buttonText: String) {
         // UI interruption monitor code goes here
     }
 
-And the alert button tap changes from
+And the alert button tap changed from
 
     alert.buttons["OK"].tap()
 
@@ -47,7 +53,16 @@ When I want to accept contacts authorization, the `buttonText` will be "OK", and
         }
     }
 
-With my two handler functions implemented (the location alert handler is the same except for the string values), I added them to a test method. But the test didn't work and the first alert was not handled. Why? Because the first alert appeared before the interruption monitor was added. The solution was to move the interruption handler functions from the test function to `setUp()`. But that meant that the `setUp()` implementation was tied to only one test case, that is, only one combination of choosing yes or no for both the contacts and location alerts.
+With my two handler functions implemented (the location alert handler is the same except for the string values), I added them to a test function which started out something like this:
+
+    func testPermissions() {
+        respondToContactsAlert("OK")
+        respondToLocationAlert("Don’t Allow")
+        self.app.statusBars.element.tap()
+        // Verification steps go here
+    }
+
+ But the test didn't work and the first alert was not handled. Why? Because the first alert appeared before the interruption monitor was added. The solution was to move the interruption handler functions from the test function to `setUp()`. But that meant that the `setUp()` implementation was tied to only one test case, that is, only one combination of choosing yes or no for both the contacts and location alerts.
 
 The next step was to divide the test class into four subclasses, one for each set of responses to the two permissions alerts. Each subclass would have only one test function, responsible for visiting each of the three screens in the app and verifying whether Colo's "permission disabled" messages were visible as appropriate.
 
