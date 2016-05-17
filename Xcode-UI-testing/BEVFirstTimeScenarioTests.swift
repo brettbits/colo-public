@@ -7,7 +7,7 @@
 
 import XCTest
 
-/* INFO: This file contains five classes; one superclass (BEVFirstTimeScenarioTests) and four subclasses.
+/* INFO: This file contains five classes; one superclass (BEVFirstTimeScenarioTests) and four subclasses. The tests are implemented in the subclasses.
  
  These tests have a prerequisite of default privacy settings on the device or simulator, so Colo displays its authorization requests to access the user's contacts and location, and the tests respond to them. Because these tests currently require manual intervention, they should either not be included in the UI Tests target, or continueAfterFailure should be set to true.
  
@@ -36,6 +36,8 @@ class BEVFirstTimeScenarioTests: Colo_UI_Tests {
         
         // See the comment at the top of this file about using continueAfterFailure versus excluding these test classes from the UI testing target
         continueAfterFailure = true
+        
+        // BUG: Due to Xcode UI testing limitation, privacy settings reset is not performed here as required
     }
     
     // Tell Colo_UI_Tests superclass to not insert its default interruption handlers
@@ -47,6 +49,9 @@ class BEVFirstTimeScenarioTests: Colo_UI_Tests {
         // Ensure that both alerts appeared
         XCTAssertTrue(contactsAlertAppeared)
         XCTAssertTrue(locationAlertAppeared)
+
+        // BUG: Due to Xcode UI testing limitation, privacy settings reset is not performed here as required
+
         super.tearDown()
     }
     
@@ -79,21 +84,13 @@ class BEVFirstTimeScenarioTests: Colo_UI_Tests {
     func assertContactsDisabledMessageExpected(expected: Bool) {
         // INFO: could obtain the string format from Localizable.strings
         let contactsDisabledText = self.app.staticTexts["Contacts access disabled. You can enable Contacts access in Privacy Settings."]
-        if (expected) {
-            XCTAssert(contactsDisabledText.exists)
-        } else {
-            XCTAssert(!contactsDisabledText.exists)
-        }
+        XCTAssert(expected == contactsDisabledText.exists)
     }
     
     func assertLocationDisabledMessageExpected(expected: Bool) {
         // INFO: could obtain the string format from Localizable.strings
         let locationDisabledText = self.app.staticTexts["Location Services disabled. You can enable Location Services in Privacy Settings."]
-        if (expected) {
-            XCTAssert(locationDisabledText.exists)
-        } else {
-            XCTAssert(!locationDisabledText.exists)
-        }
+        XCTAssert(expected == locationDisabledText.exists)
     }
 }
 
